@@ -35,15 +35,19 @@ module.exports = function startTinker(cwd, ipc) {
 	};
 	
 	const run = (data) => {
+		// `${data}`.split(/\r\n|\r|\n/)
+		// 	.filter(line => !line.match(/^<\?(php)?/gm))
+		// 	.forEach(line => proc.write(`${line}\n`));
+		
 		temp.open({ prefix: 'tnkr', suffix: 'php' }, function(err, info) {
 			if (err) {
 				console.error(err);
 				return;
 			}
-			
+
 			fs.writeSync(info.fd, data);
 			fs.closeSync(info.fd);
-			
+
 			proc.write(`include '${ info.path }';\n`);
 		});
 	};

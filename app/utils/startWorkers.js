@@ -2,6 +2,9 @@ import { ipcMain } from 'electron';
 import startTinker from '../workers/tinker.js';
 
 let tinkerWorker;
+let run = noop => noop;
+
+ipcMain.on('php-code', () => run());
 
 export default function startWorkers(cwd, ipc) {
 	tinkerWorker = startTinker(cwd, ipc);
@@ -12,14 +15,12 @@ export default function startWorkers(cwd, ipc) {
 	// 	languageServer.write(data);
 	// });
 	
-	// FIXME: Could be a memory leak
-	const run = (event, data) => {
+	run = (event, data) => {
 		if (null === tinkerWorker) {
-			tinkerWorker = startTinker(cwd, ipc);
+			startWorkers(cwd, ipc);
 		}
-		tinkerWorker.run(data);
+		setImmediate(() => tinkerWorker.run(data));
 	};
-	ipcMain.on('php-code', run);
 	
 	const onStdin = (event, data) => {
 		tinkerWorker.stdin(data);
@@ -34,7 +35,6 @@ export default function startWorkers(cwd, ipc) {
 	const cleanup = () => {
 		ipcMain.removeListener('stdin', onStdin);
 		ipcMain.removeListener('terminal-size', onResize);
-		// ipcMain.removeListener('php-code', run);
 		tinkerWorker = null;
 	};
 	
