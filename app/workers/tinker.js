@@ -8,7 +8,7 @@ temp.track(true);
 
 module.exports = function startTinker(cwd, ipc) {
 	// Start loading completions in another process
-	loadCompletions(cwd, ipc);
+	// loadCompletions(cwd, ipc);
 	
 	const proc = pty.spawn('php', ['artisan', 'tinker'], {
 		name: 'xterm-color',
@@ -16,6 +16,14 @@ module.exports = function startTinker(cwd, ipc) {
 		rows: 30,
 		env: process.env,
 		cwd,
+	});
+	
+	process.on('SIGTERM', function () {
+		proc.kill();
+	});
+	
+	process.on('SIGHUP', function () {
+		proc.kill();
 	});
 	
 	proc.on('data', data => {

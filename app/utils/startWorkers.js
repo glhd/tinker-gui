@@ -12,7 +12,11 @@ export default function startWorkers(cwd, ipc) {
 	// 	languageServer.write(data);
 	// });
 	
+	// FIXME: Could be a memory leak
 	const run = (event, data) => {
+		if (null === tinkerWorker) {
+			tinkerWorker = startTinker(cwd, ipc);
+		}
 		tinkerWorker.run(data);
 	};
 	ipcMain.on('php-code', run);
@@ -30,7 +34,7 @@ export default function startWorkers(cwd, ipc) {
 	const cleanup = () => {
 		ipcMain.removeListener('stdin', onStdin);
 		ipcMain.removeListener('terminal-size', onResize);
-		ipcMain.removeListener('php-code', run);
+		// ipcMain.removeListener('php-code', run);
 		tinkerWorker = null;
 	};
 	

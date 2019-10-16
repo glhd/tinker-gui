@@ -1,7 +1,7 @@
 const { app, shell, Menu } = require('electron');
 const { isDebug } = require('./mode.js');
 
-module.exports = function generateMenu({ run, open }) {
+module.exports = function generateMenu({ run, open, checkForUpdates }) {
 	const template = [
 		{
 			label: 'File',
@@ -76,6 +76,10 @@ module.exports = function generateMenu({ run, open }) {
 				{
 					label: 'About Tinker',
 					role: 'about'
+				},
+				{
+					label: 'Check for Updates…',
+					click: checkForUpdates,
 				},
 				{ type: 'separator' },
 				{ role: 'services' },
