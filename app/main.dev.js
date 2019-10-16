@@ -87,6 +87,8 @@ const activateMainWindow = () => {
 ipcMain.on('php-code', (event, data) => {
 	activateMainWindow();
 	
+	mainWindow.webContents.send('clear-terminal');
+	
 	if (tinker) {
 		tinker.dispose();
 	}

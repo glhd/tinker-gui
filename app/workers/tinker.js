@@ -9,7 +9,44 @@ temp.track(true);
 module.exports = function runTinker(cwd, ipc, code = null) {
 	log.info(`Starting new tinker process in ${cwd} (${null === code ? 'with' : 'without'} running code)`);
 	
-	const proc = pty.spawn('php', ['artisan', 'tinker'], {
+	let sentCode = false;
+	const args = ['artisan', 'tinker'];
+	
+	if (null !== code) {
+		const writeTinkerFile = () => {
+			const { path, fd } = temp.openSync();
+			
+			fs.writeSync(fd, code);
+			fs.closeSync(fd);
+			
+			return path;
+		};
+		
+		const writeIncludeFile = (phpFilePath) => {
+			const { path, fd } = temp.openSync();
+			
+			fs.writeSync(fd, `<?php 
+				function exec_tinker_ui() { 
+					static $runs = 0;
+					
+					if ($runs > 0) {
+						throw new \\RuntimeException('Please use the Tinker app to re-run your code.');
+					}
+					
+					include '${phpFilePath}';
+					$runs++; 
+				}
+			`);
+			fs.closeSync(fd);
+			
+			return path;
+		};
+		
+		const includeFile = writeIncludeFile(writeTinkerFile());
+		args.push(includeFile);
+	}
+	
+	const proc = pty.spawn('php', args, {
 		name: 'xterm-color',
 		cols: 80,
 		rows: 30,
@@ -29,6 +66,11 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 	
 	proc.on('data', data => {
 		ipc.send('stdout', data);
+		
+		if (!sentCode && code) {
+			sentCode = true;
+			setImmediate(() => proc.write("exec_tinker_ui();\n"));
+		}
 	});
 	
 	proc.onExit(() => {
@@ -39,22 +81,6 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 		process.off('SIGTERM', kill);
 		process.off('SIGHUP', kill);
 	});
-	
-	if (null !== code) {
-		temp.open('t', function(err, info) {
-			if (err) {
-				log.error(err);
-				return;
-			}
-			
-			fs.writeSync(info.fd, code);
-			fs.closeSync(info.fd);
-			
-			setTimeout(() => {
-				proc.write(`include '${ info.path }';\n`);
-			}, 50);
-		});
-	}
 	
 	return {
 		proc,
