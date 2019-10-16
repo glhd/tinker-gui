@@ -33,7 +33,7 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 						throw new \\RuntimeException('Please use the Tinker app to re-run your code.');
 					}
 					
-					include '${phpFilePath}';
+					return include '${phpFilePath}';
 					$runs++; 
 				}
 			`);
@@ -64,12 +64,12 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 	const resize = (event, data) => proc.resize(data.cols, data.rows);
 	ipcMain.on('terminal-size', resize);
 	
-	proc.on('data', data => {
+	proc.onData(data => {
 		ipc.send('stdout', data);
 		
 		if (!sentCode && code) {
 			sentCode = true;
-			setImmediate(() => proc.write("exec_tinker_ui();\n"));
+			setTimeout(() => proc.write("exec_tinker_ui();\n"), 100);
 		}
 	});
 	
