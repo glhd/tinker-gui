@@ -1,10 +1,11 @@
 import { ipcMain } from 'electron';
 import startTinker from '../workers/tinker.js';
+import log from 'electron-log';
 
 let tinkerWorker;
 let run = noop => noop;
 
-ipcMain.on('php-code', () => run());
+ipcMain.on('php-code', (event, data) => run(event, data));
 
 export default function startWorkers(cwd, ipc) {
 	tinkerWorker = startTinker(cwd, ipc);
@@ -17,6 +18,7 @@ export default function startWorkers(cwd, ipc) {
 	
 	run = (event, data) => {
 		if (null === tinkerWorker) {
+			log.debug('No worker is running. Starting a new one.');
 			startWorkers(cwd, ipc);
 		}
 		setImmediate(() => tinkerWorker.run(data));

@@ -18,7 +18,7 @@ function Root() {
 	});
 	
 	useEffect(() => {
-		ipcRenderer.on('update-downloaded', (event, data) => {
+		ipcRenderer.on('update', (event, data) => {
 			setUpdate(data);
 		});
 	}, []);
@@ -31,8 +31,8 @@ function Root() {
 	return (
 		<React.Fragment>
 			{ update && (
-				<div className="bg-salmon-500 text-white text-center p-2">
-					Version { update.version } is available. Restart to update.
+				<div className="bg-salmon-500 text-white text-center text-sm font-bold p-1 border-b border-gray-800">
+					Version { update.version } is available. Restart Tinker to apply the update.
 				</div>
 			) }
 			<SplitPane split="vertical" primary="first" defaultSize={ size } onChange={ onChange }>

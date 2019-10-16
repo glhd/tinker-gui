@@ -1,8 +1,8 @@
-const { ipcMain } = require('electron');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const pty = require('node-pty');
 const temp = require('temp');
+const log = require('electron-log');
 
 temp.track(true);
 
@@ -35,13 +35,9 @@ module.exports = function startTinker(cwd, ipc) {
 	};
 	
 	const run = (data) => {
-		// `${data}`.split(/\r\n|\r|\n/)
-		// 	.filter(line => !line.match(/^<\?(php)?/gm))
-		// 	.forEach(line => proc.write(`${line}\n`));
-		
-		temp.open({ prefix: 'tnkr', suffix: 'php' }, function(err, info) {
+		temp.open('t', function(err, info) {
 			if (err) {
-				console.error(err);
+				log.error(err);
 				return;
 			}
 
