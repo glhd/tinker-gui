@@ -33,8 +33,8 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 						throw new \\RuntimeException('Please use the Tinker app to re-run your code.');
 					}
 					
+					$runs++;
 					return include '${phpFilePath}';
-					$runs++; 
 				}
 			`);
 			fs.closeSync(fd);
