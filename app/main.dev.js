@@ -6,14 +6,13 @@ import { isProd, isDebug } from './utils/mode.js';
 import createWindow from './utils/createWindow.js';
 import generateMenu from './utils/generateMenu.js';
 import getCwd from './utils/getCwd.js';
-import startWorkers from './utils/startWorkers.js';
+import runTinker from './workers/tinker.js';
 
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 autoUpdater.allowPrerelease = true;
 
-let mainWindow, cwd, manuallyUpdating = false;
-let disposeOfWorkers = noop => noop;
+let mainWindow, tinker, cwd, manuallyUpdating = false;
 
 if (isProd) {
 	require('source-map-support').install();
@@ -78,13 +77,22 @@ const activateMainWindow = () => {
 			],
 		}));
 		
-		disposeOfWorkers();
-		
 		mainWindow.once('ready-to-show', () => {
-			disposeOfWorkers = startWorkers(cwd, mainWindow.webContents);
+			// FIXME: Use an ipcRenderer signal to say when the PTY is ready
+			tinker = runTinker(cwd, mainWindow.webContents);
 		});
 	}
 };
+
+ipcMain.on('php-code', (event, data) => {
+	activateMainWindow();
+	
+	if (tinker) {
+		tinker.dispose();
+	}
+	
+	tinker = runTinker(cwd, mainWindow.webContents, data);
+});
 
 app.on('activate', activateMainWindow);
 
@@ -94,10 +102,12 @@ app.on('ready', () => {
 	activateMainWindow();
 	
 	mainWindow.on('closed', () => {
-		disposeOfWorkers();
+		if (tinker) {
+			tinker.dispose();
+			tinker = null;
+		}
 		
 		mainWindow = null;
-		disposeOfWorkers = noop => noop;
 	});
 	
 	Menu.setApplicationMenu(generateMenu({

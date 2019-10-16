@@ -36,6 +36,8 @@ export default function Terminal({ paneSize }) {
 				ipcRenderer.send('terminal-size', size);
 			});
 			
+			// ipcRenderer.on('php-code', () => terminal.clear());
+			
 			ipcRenderer.on('stdout', (event, data) => {
 				terminal.write(data.toString());
 			});

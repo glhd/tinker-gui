@@ -1,14 +1,13 @@
+const { ipcMain } = require('electron');
 const fs = require('fs');
-const { spawn } = require('child_process');
 const pty = require('node-pty');
 const temp = require('temp');
 const log = require('electron-log');
 
 temp.track(true);
 
-module.exports = function startTinker(cwd, ipc) {
-	// Start loading completions in another process
-	// loadCompletions(cwd, ipc);
+module.exports = function runTinker(cwd, ipc, code = null) {
+	log.info(`Starting new tinker process in ${cwd} (${null === code ? 'with' : 'without'} running code)`);
 	
 	const proc = pty.spawn('php', ['artisan', 'tinker'], {
 		name: 'xterm-color',
@@ -18,76 +17,55 @@ module.exports = function startTinker(cwd, ipc) {
 		cwd,
 	});
 	
-	process.on('SIGTERM', function () {
-		proc.kill();
-	});
+	const kill = () => proc.kill();
+	process.on('SIGTERM', kill);
+	process.on('SIGHUP', kill);
 	
-	process.on('SIGHUP', function () {
-		proc.kill();
-	});
+	const stdin = (event, data) => proc.write(data);
+	ipcMain.on('stdin', stdin);
+	
+	const resize = (event, data) => proc.resize(data.cols, data.rows);
+	ipcMain.on('terminal-size', resize);
 	
 	proc.on('data', data => {
 		ipc.send('stdout', data);
 	});
 	
-	const resize = (cols, rows) => {
-		proc.resize(cols, rows);
-	};
+	proc.onExit(() => {
+		log.info('Tinker process has exited. Cleaning up.');
+		
+		ipcMain.removeListener('stdin', stdin);
+		ipcMain.removeListener('terminal-size', resize);
+		process.off('SIGTERM', kill);
+		process.off('SIGHUP', kill);
+	});
 	
-	const run = (data) => {
+	if (null !== code) {
 		temp.open('t', function(err, info) {
 			if (err) {
 				log.error(err);
 				return;
 			}
-
-			fs.writeSync(info.fd, data);
+			
+			fs.writeSync(info.fd, code);
 			fs.closeSync(info.fd);
-
-			proc.write(`include '${ info.path }';\n`);
+			
+			setTimeout(() => {
+				proc.write(`include '${ info.path }';\n`);
+			}, 50);
 		});
-	};
-	
-	const stdin = (data) => {
-		proc.write(data);
-	};
+	}
 	
 	return {
 		proc,
-		stdin,
-		run,
-		resize,
+		dispose: () => {
+			proc.kill();
+		},
+		// stdin: (data) => {
+		// 	proc.write(data);
+		// },
+		// resize: (cols, rows) => {
+		// 	proc.resize(cols, rows);
+		// },
 	};
 };
-
-// TODO: https://github.com/microsoft/monaco-editor/blob/master/test/playground.generated/extending-language-services-completion-provider-example.html
-function loadCompletions(cwd, ipc) {
-	let buffer = '';
-	
-	const proc = spawn('php', [], {
-		stdio: 'pipe',
-		cwd,
-	});
-	
-	proc.stdout.on('data', (data) => {
-		buffer += data.toString();
-	});
-	
-	proc.stdin.write(`<?php
-		require_once __DIR__.'/vendor/autoload.php';
-		echo json_encode([
-			'get_defined_functions' => get_defined_functions(),
-			'get_declared_classes' => get_declared_classes(),
-		]);
-	`);
-	proc.stdin.end();
-	
-	proc.on('close', code => {
-		try {
-			const functions = JSON.parse(buffer);
-			ipc.send('completions', functions);
-		} catch (e) {
-			// Just ignore errors, since autocomplete is just a bonus
-		}
-	});
-}

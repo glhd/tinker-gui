@@ -1,7 +1,7 @@
 {
   "name": "tinker-ui",
   "productName": "Tinker",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "GUI for Laravel Tinker",
   "repository": {
     "type": "git",
