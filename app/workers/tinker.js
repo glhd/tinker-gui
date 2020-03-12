@@ -10,43 +10,8 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 	log.info(`Starting new tinker process in ${cwd} (${null === code ? 'with' : 'without'} running code)`);
 	
 	let sentCode = false;
-	const args = ['artisan', 'tinker'];
 	
-	if (null !== code) {
-		const writeTinkerFile = () => {
-			const { path, fd } = temp.openSync();
-			
-			fs.writeSync(fd, code);
-			fs.closeSync(fd);
-			
-			return path;
-		};
-		
-		const writeIncludeFile = (phpFilePath) => {
-			const { path, fd } = temp.openSync();
-			
-			fs.writeSync(fd, `<?php 
-				function exec_tinker_ui() { 
-					static $runs = 0;
-					
-					if ($runs > 0) {
-						throw new \\RuntimeException('Please use the Tinker app to re-run your code.');
-					}
-					
-					$runs++;
-					return include '${phpFilePath}';
-				}
-			`);
-			fs.closeSync(fd);
-			
-			return path;
-		};
-		
-		const includeFile = writeIncludeFile(writeTinkerFile());
-		args.push(includeFile);
-	}
-	
-	const proc = pty.spawn('php', args, {
+	const proc = pty.spawn('php', ['artisan', 'tinker'], {
 		name: 'xterm-color',
 		cols: 80,
 		rows: 30,
@@ -69,7 +34,12 @@ module.exports = function runTinker(cwd, ipc, code = null) {
 		
 		if (!sentCode && code) {
 			sentCode = true;
-			setTimeout(() => proc.write("exec_tinker_ui();\n"), 100);
+			
+			const { path, fd } = temp.openSync();
+			fs.writeSync(fd, code);
+			fs.closeSync(fd);
+			
+			setTimeout(() => proc.write(`include '${path}';\n`), 100);
 		}
 	});
 	
