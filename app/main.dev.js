@@ -7,10 +7,13 @@ import createWindow from './utils/createWindow.js';
 import generateMenu from './utils/generateMenu.js';
 import getCwd from './utils/getCwd.js';
 import runTinker from './workers/tinker.js';
+import runLanguageServer from './workers/language-server.js';
 
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 autoUpdater.allowPrerelease = true;
+
+runLanguageServer();
 
 let mainWindow, tinker, cwd, manuallyUpdating = false;
 

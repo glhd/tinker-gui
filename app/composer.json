@@ -1,0 +1,7 @@
+{
+    "name": "inxilpro/tinker-gui",
+    "require": {
+        "felixfbecker/language-server": "dev-master"
+    },
+    "minimum-stability": "dev"
+}

@@ -1,3 +1,5 @@
+const path = require('path');
+
 const developmentPlugins = [
 	require('react-hot-loader/babel'),
 ];
@@ -30,6 +32,17 @@ module.exports = api => {
 			[require('@babel/preset-react'), { development }]
 		],
 		plugins: [
+			// Alias resolver
+			// [
+			// 	require.resolve('babel-plugin-module-resolver'),
+			// 	{
+			// 		root: path.resolve(__dirname, 'app'),
+			// 		alias: {
+			// 			'vscode': path.resolve(__dirname, 'node_modules/monaco-languageclient/lib/vscode-compatibility.js'),
+			// 		}
+			// 	}
+			// ],
+			
 			// Stage 0
 			require('@babel/plugin-proposal-function-bind'),
 			

@@ -1,13 +1,34 @@
 import React, { useEffect, useRef } from 'react';
 import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main';
 import useResize from './useResize';
-// import registerLanguageClient from './language-client.js';
+import registerLanguageClient from './language-client.js';
 
 import 'monaco-editor/esm/vs/editor/editor.worker';
 import 'monaco-editor/esm/vs/basic-languages/php/php.contribution';
 
 const { ipcRenderer } = window.require('electron');
 const settings = window.require('electron-settings');
+
+monaco.languages.register({
+	id: 'php',
+	extensions: [
+		'.php',
+		'.php4',
+		'.php5',
+		'.php7',
+	],
+	aliases: [
+		'PHP'
+	],
+	mimetypes: [
+		'text/php',
+		'text/x-php',
+		'application/php',
+		'application/x-php',
+		'application/x-httpd-php',
+		'application/x-httpd-php-source',
+	],
+});
 
 export default function Editor({ paneSize }) {
 	const debounce = useRef(null);
@@ -56,8 +77,10 @@ export default function Editor({ paneSize }) {
 				}, 500);
 			});
 			
-			// FIXME:
-			// registerLanguageClient(editor.current);
+			console.warn('Registering lang client.');
+			registerLanguageClient(editor.current).then(disposable => {
+				console.warn('Lang client', disposable);
+			});
 		}
 		
 		editor.current.layout();
