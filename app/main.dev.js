@@ -13,8 +13,6 @@ log.transports.file.level = 'info';
 autoUpdater.logger = log;
 autoUpdater.allowPrerelease = true;
 
-runLanguageServer();
-
 let mainWindow, tinker, cwd, manuallyUpdating = false;
 
 if (isProd) {
@@ -83,6 +81,7 @@ const activateMainWindow = () => {
 		mainWindow.once('ready-to-show', () => {
 			// FIXME: Use an ipcRenderer signal to say when the PTY is ready
 			tinker = runTinker(cwd, mainWindow.webContents);
+			runLanguageServer(cwd, mainWindow.webContents);
 		});
 	}
 };

@@ -1,21 +1,33 @@
 const { ipcMain } = require('electron');
-const net = require('net');
+// const net = require('net');
 const path = require('path');
-const { spawn } = require('mz/child_process');
-const { createMessageConnection } = require('vscode-ws-jsonrpc');
+const { createConnection, createServerProcess, forward } = require('vscode-ws-jsonrpc/lib/server');
 const log = require('electron-log');
+const { isPackaged } = require('../utils/mode.js');
 
-export default function() {
-	const executablePath = 'php';
-	const memoryLimit = '4095M';
-	
-	let childProcess;
-	let serverSocket;
+const executablePath = 'php';
+const memoryLimit = '4095M';
+
+const vendorRoot = isPackaged
+	? process.resourcesPath
+	: path.resolve(__dirname, '..', '..');
+const serverPath = path.join(vendorRoot, 'vendor', 'felixfbecker', 'language-server', 'bin', 'php-language-server.php');
+const serverArgs = [
+	serverPath,
+	// TODO: This may need to come back so that STDIO doesn't get blocked
+	// '--tcp=127.0.0.1:' + server.address().port,
+	'--memory-limit=' + memoryLimit,
+];
+
+log.warn('RESOURCE PATH', process.resourcesPath);
+
+export default function(cwd, ipc) {
+	const serverOptions = {
+		cwd,
+	};
 	
 	let listenCallback = () => null;
-	let writerCallback = () => null;
 	
-	// `reader` reads from client, `writer` writes to client
 	const reader = {
 		onError: (event) => {
 			// log.error('Reader error: ', event);
@@ -42,85 +54,69 @@ export default function() {
 			// log.info('Close writer: ', event);
 		},
 		write: (msg) => {
-			log.info('Writing: ', msg);
-			writerCallback(msg);
+			const json = JSON.stringify(msg);
+			// log.info(`[server] ${json}`);
+			ipc.send('language-protocol', json);
 		},
 		dispose: () => {
 			// log.info('Writer disposed.');
 		},
 	};
-	const logger = {
-		error: (message) => {
-			log.error(message);
-		},
-		warn: (message) => {
-			log.warn(message);
-		},
-		info: (message) => {
-			log.info(message);
-		},
-		log: (message) => {
-			log.log(message);
-		},
-		debug: (message) => {
-			log.debug(message);
-		},
-	};
 	
-	const connection = createMessageConnection(reader, writer, logger);
-	connection.listen();
+	const socketConnection = createConnection(reader, writer, () => null);
+	const serverConnection = createServerProcess('PHP Language Server', executablePath, serverArgs, serverOptions);
+	
+	forward(socketConnection, serverConnection, message => {
+		log.info(`[RPC] ${JSON.stringify(message)}`);
+		return message;
+	});
 	
 	ipcMain.on('language-protocol', (event, data) => {
-		log.info('Data from client: ', data);
-		// listenCallback(`${data}`);
-		writer.write(`${data}`);
+		listenCallback(JSON.parse(`${data}`));
 	});
-	
-	const serverPath = path.join(__dirname, '..', 'vendor', 'felixfbecker', 'language-server', 'bin', 'php-language-server.php');
-	log.info(`Lang server: ${ serverPath }`);
 	
 	// Use a TCP socket because of problems with blocking STDIO
-	const server = net.createServer(socket => {
-		// 'connection' listener
-		log.info('PHP process connected');
-		socket.on('end', () => {
-			log.info('PHP process disconnected');
-		});
-		server.close();
-		// resolve({ reader: socket, writer: socket });
-		serverSocket = socket;
-	});
+	// const server = net.createServer(socket => {
+	// 	// 'connection' listener
+	// 	log.info('PHP process connected');
+	// 	socket.on('end', () => {
+	// 		log.info('PHP process disconnected');
+	// 	});
+	// 	server.close();
+	// 	// resolve({ reader: socket, writer: socket });
+	// 	serverSocket = socket;
+	// });
 	
 	// Listen on random port
-	server.listen(0, '127.0.0.1', () => {
-		// The server is implemented in PHP
-		childProcess = spawn(executablePath, [
-			serverPath,
-			'--tcp=127.0.0.1:' + server.address().port,
-			'--memory-limit=' + memoryLimit,
-		]);
-		
-		writerCallback = (data) => {
-			childProcess.stdin.write(`${data}\n`);
-		};
-		
-		childProcess.stderr.on('data', (chunk) => {
-			const str = chunk.toString();
-			log.error('[PHP] ', str);
-		});
-		
-		childProcess.stdout.on('data', (chunk) => {
-			const str = chunk.toString();
-			log.info('[PHP] ', str);
-			listenCallback(str);
-		});
-		
-		childProcess.on('exit', (code, signal) => {
-			log.info(
-				`Language server exited ` + (signal ? `from signal ${ signal }` : `with exit code ${ code }`)
-			);
-		});
-	});
+	// server.listen(0, '127.0.0.1', () => {
+	// 	// The server is implemented in PHP
+	// 	childProcess = spawn(executablePath, [
+	// 		serverPath,
+	// 		'--tcp=127.0.0.1:' + server.address().port,
+	// 		'--memory-limit=' + memoryLimit,
+	// 	]);
+	//	
+	// 	writerCallback = (data) => {
+	// 		ipc.send('language-protocol', `${data}`);
+	// 	};
+	//	
+	// 	childProcess.stderr.on('data', (chunk) => {
+	// 		const str = chunk.toString();
+	// 		log.error('[PHP] ', str);
+	// 	});
+	//	
+	// 	childProcess.stdout.on('data', (chunk) => {
+	// 		const str = chunk.toString();
+	// 		log.info('[PHP] ', str);
+	// 		listenCallback(str);
+	// 	});
+	//	
+	// 	childProcess.on('exit', (code, signal) => {
+	// 		log.info(
+	// 			`Language server exited ` + (signal ? `from signal ${ signal }` : `with exit code ${ code }`)
+	// 		);
+	// 	});
+	// });
 	
-	return { childProcess, serverSocket };
+	// return { childProcess, serverSocket };
 }

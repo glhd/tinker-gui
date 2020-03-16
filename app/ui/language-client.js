@@ -1,14 +1,20 @@
 import * as url from 'url';
 import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main';
 import { listen } from 'vscode-ws-jsonrpc';
-import { createConnection, MonacoLanguageClient, MonacoServices, RevealOutputChannelOn } from 'monaco-languageclient';
+import { 
+	createConnection, 
+	MonacoLanguageClient, 
+	MonacoServices, 
+	RevealOutputChannelOn,
+	ErrorAction,
+	CloseAction,
+} from 'monaco-languageclient';
 
 const { ipcRenderer } = window.require('electron');
 const log = require('electron-log');
 
 export default function registerLanguageClient(editor) {
 	
-	log.info('Installing language client');
 	MonacoServices.install(editor);
 	
 	return new Promise(resolve => {
@@ -18,7 +24,6 @@ export default function registerLanguageClient(editor) {
 			onerror: () => null,
 			onclose: () => null,
 			send: (content) => {
-				// log.info('Sending to lang server: ', content);
 				ipcRenderer.send('language-protocol', `${ content }`);
 			},
 			close: () => {
@@ -29,9 +34,10 @@ export default function registerLanguageClient(editor) {
 		setTimeout(() => webSocket.onopen(), 1);
 		
 		ipcRenderer.on('language-protocol', (event, data) => {
-			const message = data.toString();
-			log.info('From lang server: ', message);
-			webSocket.onmessage(message);
+			// debugger;
+			// const message = JSON.parse(`${data}`);
+			// console.log('From lang server: ', message);
+			webSocket.onmessage({ data });
 		});
 		
 		listen({
@@ -43,7 +49,6 @@ export default function registerLanguageClient(editor) {
 				log: (message) => log.log(message),
 			},
 			onConnection: connection => {
-				log.info('Starting client connection', connection);
 				const languageClient = createLanguageClient(connection);
 				const disposable = languageClient.start();
 				
@@ -57,10 +62,18 @@ export default function registerLanguageClient(editor) {
 			return new MonacoLanguageClient({
 				name: "Tinker Language Client",
 				clientOptions: {
-					documentSelector: [
-						{ scheme: 'file', language: 'php' },
-						{ scheme: 'untitled', language: 'php' },
-					],
+					// FIXME:
+					// workspaceFolder: '/Users/inxilpro/Library/Mobile Documents/com~apple~CloudDocs/Development/web/home-inspector-health',
+					// documentSelector: [
+					// 	{ scheme: 'file', language: 'php' },
+					// 	{ scheme: 'untitled', language: 'php' },
+					// 	{ scheme: 'inmemory', language: 'php' },
+					// ],
+					documentSelector: ['php'],
+					errorHandler: {
+						error: () => ErrorAction.Continue,
+						closed: () => CloseAction.DoNotRestart
+					},
 					revealOutputChannelOn: RevealOutputChannelOn.Never,
 					uriConverters: {
 						// VS Code by default %-encodes even the colon after the drive letter

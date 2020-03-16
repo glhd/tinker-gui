@@ -1,8 +1,5 @@
 
 const BuiltinModule = require('module');
-// const path = require('path');
-
-// debugger;
 const builtInResolve = BuiltinModule._resolveFilename;
 
 BuiltinModule._resolveFilename = function(request, parentModule, isMain, options) {

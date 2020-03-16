@@ -46,11 +46,17 @@ export default function Editor({ paneSize }) {
 	
 	useEffect(() => {
 		if (null === editor.current) {
+			const value =  settings.has('code')
+				? settings.get('code')
+				: '<?php\n\n';
+			
 			editor.current = monaco.editor.create(element.current, {
 				language: 'php',
-				value: settings.has('code')
-					? settings.get('code')
-					: '<?php\n\n',
+				model: monaco.editor.createModel(
+					value, 
+					'php', 
+					monaco.Uri.parse('inmemory://tinker.php')
+				),
 				theme: 'vs-dark',
 				glyphMargin: true,
 				lightbulb: {
@@ -77,9 +83,8 @@ export default function Editor({ paneSize }) {
 				}, 500);
 			});
 			
-			console.warn('Registering lang client.');
 			registerLanguageClient(editor.current).then(disposable => {
-				console.warn('Lang client', disposable);
+				// console.warn('Lang client', disposable);
 			});
 		}
 		
