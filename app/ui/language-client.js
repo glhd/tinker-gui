@@ -1,14 +1,8 @@
 import * as url from 'url';
 import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main';
+// import * as vscode from 'monaco-languageclient/lib/vscode-compatibility';
 import { listen } from 'vscode-ws-jsonrpc';
-import { 
-	createConnection, 
-	MonacoLanguageClient, 
-	MonacoServices, 
-	RevealOutputChannelOn,
-	ErrorAction,
-	CloseAction,
-} from 'monaco-languageclient';
+import { CloseAction, createConnection, ErrorAction, MonacoLanguageClient, MonacoServices, RevealOutputChannelOn, } from 'monaco-languageclient';
 
 const { ipcRenderer } = window.require('electron');
 const log = require('electron-log');
@@ -34,9 +28,6 @@ export default function registerLanguageClient(editor) {
 		setTimeout(() => webSocket.onopen(), 1);
 		
 		ipcRenderer.on('language-protocol', (event, data) => {
-			// debugger;
-			// const message = JSON.parse(`${data}`);
-			// console.log('From lang server: ', message);
 			webSocket.onmessage({ data });
 		});
 		
@@ -63,12 +54,7 @@ export default function registerLanguageClient(editor) {
 				name: "Tinker Language Client",
 				clientOptions: {
 					// FIXME:
-					// workspaceFolder: '/Users/inxilpro/Library/Mobile Documents/com~apple~CloudDocs/Development/web/home-inspector-health',
-					// documentSelector: [
-					// 	{ scheme: 'file', language: 'php' },
-					// 	{ scheme: 'untitled', language: 'php' },
-					// 	{ scheme: 'inmemory', language: 'php' },
-					// ],
+					// workspaceFolder: '',
 					documentSelector: ['php'],
 					errorHandler: {
 						error: () => ErrorAction.Continue,
