@@ -16,7 +16,9 @@ export default function(cwd, ipc) {
 	let listenCallback = () => null;
 	
 	ipcMain.on('language-protocol', (event, data) => {
-		log.info(`[RPC] <- ${ data }`);
+		if (isDebug) {
+			log.info(`[RPC] <- ${ data }`);
+		}
 		listenCallback(JSON.parse(`${ data }`));
 	});
 	
@@ -37,7 +39,9 @@ export default function(cwd, ipc) {
 		onClose: (event) => null,
 		write: (msg) => {
 			const json = JSON.stringify(msg);
-			log.info(`[RPC] -> ${ json }`);
+			if (isDebug) {
+				log.info(`[RPC] -> ${ json }`);
+			}
 			ipc.send('language-protocol', json);
 		},
 		dispose: () => null,
