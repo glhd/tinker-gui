@@ -1,6 +1,7 @@
 # Tinker for Mac
 
-This project is currently a work in progress.
+This project is currently a work in progress. For a full-featured Laravel Tinker
+GUI, take a look at [Tinkerwell](https://tinkerwell.app/).
 
 [Download Current Beta](https://github.com/glhd/tinker-gui/releases)
 

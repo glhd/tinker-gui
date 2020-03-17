@@ -1,7 +1,7 @@
 {
   "name": "tinker-ui",
   "productName": "Tinker",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "GUI for Laravel Tinker",
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
     "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
     "dev": "cross-env START_HOT=1 node -r @babel/register ./internals/scripts/CheckPortInUse.js && cross-env START_HOT=1 yarn start-renderer-dev",
     "package": "yarn build && electron-builder build --publish never",
-    "package-debug": "cross-env DEBUG_PROD=true yarn build && cross-env DEBUG_PROD=true electron-builder build --publish never",
+    "package-debug": "cross-env DEBUG_PROD=true yarn build && cross-env DEBUG_PROD=true SKIP_NOTARIZE=true electron-builder build --publish never",
     "package-all": "yarn build && electron-builder build -mwl",
     "package-linux": "yarn build && electron-builder build --linux",
     "package-win": "yarn build && electron-builder build --win --x64",
@@ -83,7 +83,18 @@
     "directories": {
       "buildResources": "resources",
       "output": "release"
-    }
+    },
+    "extraFiles": [
+      {
+        "from": "vendor",
+        "to": "Resources/vendor",
+        "filter": [
+          "**/*.php",
+          "**/php.ini",
+          "**/stubs"
+        ]
+      }
+    ]
   },
   "author": {
     "name": "Chris Morrell",
@@ -126,15 +137,19 @@
     "@babel/plugin-proposal-throw-expressions": "^7.2.0",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/plugin-syntax-import-meta": "^7.2.0",
+    "@babel/plugin-transform-classes": "^7.8.6",
     "@babel/plugin-transform-react-constant-elements": "^7.2.0",
     "@babel/plugin-transform-react-inline-elements": "^7.2.0",
+    "@babel/plugin-transform-runtime": "^7.8.3",
     "@babel/preset-env": "^7.4.2",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.4.0",
+    "@babel/runtime": "^7.8.7",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "^24.5.0",
     "babel-loader": "^8.0.5",
     "babel-plugin-dev-expression": "^0.2.1",
+    "babel-plugin-module-resolver": "^4.0.0",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "chalk": "^2.4.2",
     "concurrently": "^4.1.0",
@@ -179,6 +194,7 @@
     "core-js": "^2.0.0",
     "devtron": "^1.4.0",
     "electron-ipc-stream": "^0.2.0",
+    "electron-ipcmain-websocket": "^0.0.1-1",
     "electron-ipcrenderer-websocket": "^0.1.0-0",
     "electron-log": "^3.0.8",
     "electron-settings": "^3.2.0",
@@ -186,6 +202,7 @@
     "monaco-editor": "^0.18.1",
     "monaco-languageclient": "^0.10.2",
     "mousetrap": "^1.6.3",
+    "mz": "^2.7.0",
     "node-pty": "^0.9.0-beta27",
     "react": "^16.6.3",
     "react-dom": "npm:@hot-loader/react-dom",

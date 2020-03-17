@@ -1,57 +1,107 @@
-// const { DataCallback, Event, Message } = require('vscode-jsonrpc');
-// const { PartialMessageInfo } = require('vscode-jsonrpc/lib/messageReader.js');
-// const { ipcMain } = require('electron');
-// const fs = require('fs');
+const { ipcMain } = require('electron');
+const net = require('net');
 const path = require('path');
-// const { spawn } = require('child_process');
+const { spawn } = require('child_process');
+const { createConnection, createSocketConnection, forward } = require('vscode-ws-jsonrpc/lib/server');
+const log = require('electron-log');
+const { isPackaged, isDebug } = require('../utils/mode.js');
 
-// const rpc = require('vscode-ws-jsonrpc');
+const executablePath = 'php';
+const memoryLimit = '4095M';
+const vendorRoot = isPackaged
+	? process.resourcesPath
+	: path.resolve(__dirname, '..', '..');
 
-const server = require('vscode-ws-jsonrpc/lib/server');
-
-module.exports = function startLanguageServer(ipc) {
-	let listener = noop => noop;
+export default function(cwd, ipc) {
+	let listenCallback = () => null;
 	
-	const reader = {
-		dispose: () => {
-		},
-		onError: (cb) => {
-		},
-		onClose: (cb) => {
-		},
-		listen: (callback) => {
-			listener = callback;
+	ipcMain.on('language-protocol', (event, data) => {
+		if (isDebug) {
+			log.info(`[RPC] <- ${ data }`);
 		}
-	};
-	
-	const writer = {
-		dispose: () => {
-		},
-		onError: (cb) => {
-		},
-		onClose: (cb) => {
-		},
-		write: (msg) => {
-			ipc.send('language-protocol', JSON.stringify(msg));
-		}
-	};
-	
-	const socketConnection = server.createConnection(reader, writer, noop => noop);
-	const serverConnection = server.createServerProcess(
-		'Tinker',
-		'php',
-		[path.resolve(__dirname, '../vendor/felixfbecker/language-server/bin/php-language-server.php')]
-	);
-	
-	server.forward(socketConnection, serverConnection, message => {
-		return message;
+		listenCallback(JSON.parse(`${ data }`));
 	});
 	
-	const write = (data) => {
-		listener(JSON.parse(data));
+	const reader = {
+		onError: (event) => null,
+		onClose: (event) => null,
+		onPartialMessage: (message) => null,
+		listen: (callback) => {
+			log.info('Listening for RPC messages');
+			listenCallback = callback;
+		},
+		dispose: () => {
+			listenCallback = () => null;
+		},
+	};
+	const writer = {
+		onError: (event) => null,
+		onClose: (event) => null,
+		write: (msg) => {
+			const json = JSON.stringify(msg);
+			if (isDebug) {
+				log.info(`[RPC] -> ${ json }`);
+			}
+			ipc.send('language-protocol', json);
+		},
+		dispose: () => null,
 	};
 	
-	return {
-		write,
-	};
-};
+	const ipcConnection = createConnection(reader, writer, () => null);
+	
+	spawnLanguageServer().then(({ socket, dispose }) => {
+		const tcpConnection = createSocketConnection(socket, socket, dispose);
+		forward(ipcConnection, tcpConnection, message => message);
+		ipc.send('language-server-ready', JSON.stringify(true));
+	});
+}
+
+function spawnLanguageServer() {
+	return new Promise(resolve => {
+		let childProcess;
+		
+		// Use a TCP socket because of problems with blocking STDIO
+		const server = net.createServer(socket => {
+			log.info('Connected to language server');
+			
+			socket.on('end', () => log.info('Disconnected from language server'));
+			
+			// Stop the server from accepting any more connections
+			server.close();
+			
+			const dispose = () => {
+				socket.end();
+				childProcess.kill('SIGTERM');
+			};
+			
+			resolve({ socket, dispose });
+		});
+		
+		// Listen on random port
+		server.listen(0, '127.0.0.1', () => {
+			// The server is implemented in PHP
+			const serverPath = path.join(vendorRoot, 'vendor', 'felixfbecker', 'language-server', 'bin', 'php-language-server.php');
+			
+			log.info(`Starting language server and connecting to port ${ server.address().port }`);
+			
+			childProcess = spawn(executablePath, [
+				serverPath,
+				`--tcp=127.0.0.1:${ server.address().port }`,
+				`--memory-limit=${ memoryLimit }`,
+			]);
+			
+			childProcess.stderr.on('data', (chunk) => {
+				chunk.toString()
+					.split('\n')
+					.forEach(line => log.info(`[PHP] ${ line }`));
+			});
+			
+			childProcess.on('exit', (code, signal) => {
+				const reason = signal
+					? `from signal ${ signal }`
+					: `with exit code ${ code }`;
+				log.info(`Language server exited ${ reason }`);
+			});
+		});
+	});
+}
