@@ -1,6 +1,7 @@
 import Monaco, {useMonaco} from '@monaco-editor/react';
 import {useEffect, useRef} from "react";
 import {editor} from "monaco-editor";
+import ITextModel = editor.ITextModel;
 
 export default function Editor(props: {
 	onRun: (code: string) => any,
@@ -16,7 +17,7 @@ export default function Editor(props: {
 			return;
 		}
 		
-		const modelCallback = (model) => {
+		const modelCallback = (model: ITextModel) => {
 			model.onDidChangeContent(() => {
 				clearTimeout(debounce.current);
 				debounce.current = setTimeout(() => {
