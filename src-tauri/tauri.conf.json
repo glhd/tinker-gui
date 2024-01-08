@@ -15,6 +15,12 @@
       "dialog": {
         "open": true
       },
+      "fs": {
+        "all": true,
+        "scope": [
+          "$TEMP/*"
+        ]
+      },
       "path": {
         "all": true
       },

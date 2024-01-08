@@ -1,38 +1,42 @@
 import {useEffect, useRef} from 'react';
+import {tempdir} from '@tauri-apps/api/os';
+import {join} from '@tauri-apps/api/path';
+import {writeTextFile} from '@tauri-apps/api/fs';
 import {IPty, spawn} from "tauri-pty";
-import {Terminal} from "@xterm/xterm";
 
-export default function useTinker(
-	terminal: Terminal|undefined,
-	cwd: string|undefined
-) {
+export default function useTinker(cwd: string | undefined) {
 	const tinker = useRef<IPty>();
 	
 	useEffect(() => {
-		if (!terminal || !cwd) {
+		if (!cwd) {
 			return;
 		}
 		
 		const pty = spawn('php', ['artisan', 'tinker'], {
 			cwd,
-			cols: terminal.cols,
-			rows: terminal.rows,
+			cols: 80,
+			rows: 20,
 		});
-		
-		const disposables = [
-			pty.onData(data => terminal?.write(data)),
-			terminal.onData(data => pty.write(data)),
-			terminal.onResize(({cols, rows}) => pty.resize(cols, rows)),
-		];
 		
 		tinker.current = pty;
 		
 		return () => {
-			disposables.forEach(d => d.dispose());
 			pty.kill();
 			tinker.current = undefined;
 		};
-	}, [terminal, cwd]);
+	}, [cwd]);
 	
-	return tinker.current;
+	async function run(code: string) {
+		const suffix = (Math.random()).toString(36).substring(2);
+		const filename = await join(await tempdir(), `tinker-${suffix}.php`);
+		
+		await writeTextFile(filename, code);
+		
+		return filename;
+	}
+	
+	return {
+		tinker: tinker.current,
+		run,
+	};
 }
