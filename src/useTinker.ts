@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react';
 import {tempdir} from '@tauri-apps/api/os';
 import {join} from '@tauri-apps/api/path';
-import {writeTextFile} from '@tauri-apps/api/fs';
+import {writeTextFile,removeFile} from '@tauri-apps/api/fs';
 import {IPty, spawn} from "tauri-pty";
 
 export default function useTinker(cwd: string | undefined) {
@@ -31,10 +31,8 @@ export default function useTinker(cwd: string | undefined) {
 		const filename = await join(await tempdir(), `tinker-${suffix}.php`);
 		
 		await writeTextFile(filename, code);
-		
-		console.log(filename);
-		
-		return filename;
+		tinker.current?.write(`include '${filename}';\n`);
+		await removeFile(filename);
 	}
 	
 	return {
