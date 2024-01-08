@@ -12,6 +12,12 @@
   "tauri": {
     "allowlist": {
       "all": false,
+      "dialog": {
+        "open": true
+      },
+      "path": {
+        "all": true
+      },
       "shell": {
         "all": false,
         "execute": true,
@@ -47,9 +53,9 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "tinker",
-        "width": 800,
-        "height": 600
+        "title": "Tinker",
+        "width": 1200,
+        "height": 900
       }
     ]
   }

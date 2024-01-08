@@ -4,12 +4,12 @@ import {Terminal} from "@xterm/xterm";
 
 export default function useTinker(
 	terminal: Terminal|undefined,
-	cwd: string = '/Users/inxilpro/Development/web/www'
+	cwd: string|undefined
 ) {
 	const tinker = useRef<IPty>();
 	
 	useEffect(() => {
-		if (!terminal) {
+		if (!terminal || !cwd) {
 			return;
 		}
 		
@@ -21,7 +21,6 @@ export default function useTinker(
 		
 		const disposables = [
 			pty.onData(data => terminal?.write(data)),
-			pty.onExit(() => terminal?.clear()),
 			terminal.onData(data => pty.write(data)),
 			terminal.onResize(({cols, rows}) => pty.resize(cols, rows)),
 		];
