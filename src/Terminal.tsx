@@ -1,14 +1,13 @@
 import {useEffect, useRef} from "react";
 import useResize from "./useResize.ts";
-import useTinker from "./useTinker.ts";
 import useXterm from "./useXterm.ts";
+import {IPty} from "tauri-pty";
 
-export default function Terminal(props: { cwd: string | undefined, paneSize: number }) {
-	const {paneSize, cwd} = props;
+export default function Terminal(props: { tinker: IPty|undefined, paneSize: number }) {
+	const {tinker, paneSize} = props;
 	const {width, height} = useResize();
 	const ref = useRef(null);
 	const {terminal, addon} = useXterm(ref);
-	const {tinker} = useTinker(cwd);
 	
 	// Sync terminal and tinker PTY instance
 	useEffect(() => {

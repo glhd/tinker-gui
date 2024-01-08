@@ -21,6 +21,9 @@
           "$TEMP/*"
         ]
       },
+      "os": {
+        "all": true
+      },
       "path": {
         "all": true
       },

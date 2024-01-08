@@ -32,6 +32,8 @@ export default function useTinker(cwd: string | undefined) {
 		
 		await writeTextFile(filename, code);
 		
+		console.log(filename);
+		
 		return filename;
 	}
 	
