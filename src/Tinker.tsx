@@ -16,18 +16,10 @@ export default function Tinker({ cwd }: { cwd: string }) {
 		console.log(`Setting up terminal/pty listeners…`);
 		
 		pty.onData(data => terminal.write(data));
-		
-		const disposables = [
-			terminal.onData(data => pty.write(data)),
-			terminal.onResize(({ cols, rows }) => pty.resize(cols, rows)),
-		];
+		terminal.onData(data => pty.write(data));
+		terminal.onResize(({ cols, rows }) => pty.resize(cols, rows));
 		
 		pty.resize(terminal.cols, terminal.rows);
-		
-		return () => {
-			console.log('Disposing of terminal/pty listeners…');
-			disposables.forEach(d => d.dispose());
-		};
 	}, []);
 	
 	return (

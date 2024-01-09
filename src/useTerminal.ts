@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import tailwind from "./tailwind.ts";
-import { IDisposable, NoopDisposable } from "./disposables.ts";
+import { IDisposable } from "./disposables.ts";
+import useBufferedCallback from "./useBufferedCallback.ts";
 
 export interface ITerminal {
 	cols: number,
@@ -10,13 +11,15 @@ export interface ITerminal {
 	open: (parent: HTMLElement) => void,
 	resize: () => void,
 	write: (data: string) => void,
-	onData: (callback: (data: string) => any) => IDisposable,
-	onResize: (callback: (size: { cols: number, rows: number }) => any) => IDisposable,
+	onData: (callback: (data: string) => any) => void,
+	onResize: (callback: (size: { cols: number, rows: number }) => any) => void,
 }
 
 export default function useTerminal(): ITerminal {
+	const [onData, setOnData, disposableData] = useBufferedCallback('terminal');
+	
 	const [buffer, setBuffer] = useState<string[]>([]);
-	const onData = useRef<((data: string) => any)>(() => () => null);
+	
 	const onResize = useRef<((size: { cols: number, rows: number }) => any)>(() => () => null);
 	const terminal = useRef<XTerm>();
 	const addon = useRef<FitAddon>();
@@ -42,20 +45,19 @@ export default function useTerminal(): ITerminal {
 			foreground: tailwind.colors.slate[100],
 		};
 		
-		const disposables = [
+		if (buffer.length) {
+			buffer.forEach(data => xterm.write(data));
+			setBuffer([]);
+		}
+		
+		const disposables: IDisposable[] = [
 			xterm,
 			fit,
-			// xterm.onData((data) => {
-			// 	console.log(`TERMINAL DATA: ${ data }`);
-			// 	onData.current
-			// 		? onData.current(data)
-			// 		: setBuffer([...buffer, data]);
-			// }),
-			// xterm.onResize((size) => {
-			// 	if (onResize.current) {
-			// 		onResize.current(size);
-			// 	}
-			// }),
+			disposableData,
+			xterm.onData(onData),
+			xterm.onResize((size) => {
+				onResize.current?.call(null, size);
+			}),
 		];
 		
 		return () => {
@@ -78,26 +80,15 @@ export default function useTerminal(): ITerminal {
 		write(data) {
 			if (terminal.current) {
 				terminal.current.write(data);
-				return;
+			} else {
+				setBuffer([...buffer, data]);
 			}
-			
-			setBuffer([...buffer, data]);
 		},
 		onData(callback) {
-			onData.current = callback;
-			
-			if (buffer.length) {
-				buffer.forEach(data => callback(data));
-			}
-			
-			setBuffer([]);
-			
-			return NoopDisposable;
+			setOnData(callback);
 		},
 		onResize(callback) {
 			onResize.current = callback;
-			
-			return NoopDisposable;
 		}
 	};
 }
