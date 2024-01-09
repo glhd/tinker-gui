@@ -3,6 +3,7 @@ import { homeDir } from '@tauri-apps/api/path';
 import { exists } from '@tauri-apps/api/fs';
 import { IPty as ITauryPty, spawn } from "tauri-pty";
 import useBufferedCallback from "./useBufferedCallback.ts";
+import { callbackToDisposable } from "./disposables.ts";
 
 export interface IPty {
 	run: (code: string) => Promise<void>,
@@ -12,20 +13,17 @@ export interface IPty {
 }
 
 export default function usePty(cwd: string): IPty {
-	const [onData, setOnData] = useBufferedCallback('pty');
+	const [onData, setOnData, disposableData] = useBufferedCallback('pty');
 	const pty = useRef<ITauryPty>();
 	
 	useEffect(() => {
-		let onDispose = [
-			() => {
+		const disposables = [
+			callbackToDisposable(() => {
 				console.log(`Disposing of PTY instance…`)
 				pty.current = undefined;
-			},
+			}),
+			disposableData,
 		];
-		
-		let dispose = () => {
-			onDispose.forEach(dispose => dispose());
-		}
 		
 		if (! pty.current) {
 			(async () => {
@@ -41,26 +39,24 @@ export default function usePty(cwd: string): IPty {
 					env: { PATH }
 				});
 				
-				const disposables = [
-					session.onData((data) => onData(data)),
-					session.onExit(() => {
-						console.warn(`PTY EXITED`);
-					}),
-				];
-				
-				onDispose.push(() => disposables.forEach(d => d.dispose()));
-				
 				pty.current = session;
 				
-				onDispose.push(() => {
+				disposables.push(session.onData(onData));
+				disposables.push(session.onExit(({ exitCode }) => {
+					console.warn(`PTY exited with code ${ exitCode }`);
+				}));
+				
+				disposables.push(callbackToDisposable(() => {
 					console.log(`Killing PTY session…`)
 					session.kill();
-				});
+				}));
 			})();
 		}
 		
-		return dispose;
-	}, [cwd, pty.current]);
+		return () => {
+			disposables.forEach(d => d.dispose());
+		};
+	}, [cwd]);
 	
 	return {
 		async run(code) {

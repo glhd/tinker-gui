@@ -45,17 +45,17 @@ export default function useTerminal(): ITerminal {
 		const disposables = [
 			xterm,
 			fit,
-			xterm.onData((data) => {
-				console.log(`TERMINAL DATA: ${ data }`);
-				onData.current
-					? onData.current(data)
-					: setBuffer([...buffer, data]);
-			}),
-			xterm.onResize((size) => {
-				if (onResize.current) {
-					onResize.current(size);
-				}
-			}),
+			// xterm.onData((data) => {
+			// 	console.log(`TERMINAL DATA: ${ data }`);
+			// 	onData.current
+			// 		? onData.current(data)
+			// 		: setBuffer([...buffer, data]);
+			// }),
+			// xterm.onResize((size) => {
+			// 	if (onResize.current) {
+			// 		onResize.current(size);
+			// 	}
+			// }),
 		];
 		
 		return () => {
@@ -64,7 +64,7 @@ export default function useTerminal(): ITerminal {
 			terminal.current = undefined;
 			addon.current = undefined;
 		};
-	}, [terminal.current]);
+	}, []);
 	
 	return {
 		cols: terminal.current?.cols || 0,

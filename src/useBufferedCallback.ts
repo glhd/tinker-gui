@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
+import { IDisposable } from "./disposables.ts";
 
 export type BufferedCallback = (data: string) => void;
+export type SetBufferedCallback = (callback: BufferedCallback) => void;
 
-export default function useBufferedCallback(name: string): [BufferedCallback, (callback: BufferedCallback) => any] {
-	const onData = useRef<((data: string) => any)>(() => () => null);
+export default function useBufferedCallback(name: string): [BufferedCallback, SetBufferedCallback, IDisposable] {
+	const onData = useRef<BufferedCallback>();
 	const [buffer, setBuffer] = useState<string[]>([]);
 	
 	const callback: BufferedCallback = (data: string) => {
@@ -17,8 +19,19 @@ export default function useBufferedCallback(name: string): [BufferedCallback, (c
 	};
 	
 	const setCallback = (callback: BufferedCallback) => {
+		if (buffer.length) {
+			buffer.forEach(data => callback(data));
+			setBuffer([]);
+		}
+		
 		onData.current = callback;
 	};
 	
-	return [callback, setCallback];
+	const disposable = {
+		dispose() {
+			onData.current = undefined;
+		}
+	};
+	
+	return [callback, setCallback, disposable];
 }

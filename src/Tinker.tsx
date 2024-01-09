@@ -28,7 +28,7 @@ export default function Tinker({ cwd }: { cwd: string }) {
 			console.log('Disposing of terminal/pty listeners…');
 			disposables.forEach(d => d.dispose());
 		};
-	}, [terminal, pty]);
+	}, []);
 	
 	return (
 		<PanelGroup direction="horizontal" className="100vh w-full">

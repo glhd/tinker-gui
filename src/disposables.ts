@@ -7,3 +7,11 @@ export const NoopDisposable: IDisposable = {
 		// noop
 	},
 };
+
+export function callbackToDisposable(callback: () => void): IDisposable {
+	return {
+		dispose() {
+			callback();
+		}
+	};
+}
