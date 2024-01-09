@@ -87,6 +87,7 @@ export default function useTerminal(): ITerminal {
 	};
 }
 
+// See: https://github.com/microsoft/vscode/blob/a3445c68a08d30734c8b3fa45d09c73723cb393a/src/vs/editor/standalone/common/themes.ts#L83
 const theme = {
 	background: '#1e1e1e',
 	foreground: '#d4d4d4',
