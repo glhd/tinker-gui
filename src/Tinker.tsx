@@ -15,8 +15,9 @@ export default function Tinker({ cwd }: { cwd: string }) {
 	useEffect(() => {
 		console.log(`Setting up terminal/pty listeners…`);
 		
+		pty.onData(data => terminal.write(data));
+		
 		const disposables = [
-			pty.onData(data => terminal.write(data)),
 			terminal.onData(data => pty.write(data)),
 			terminal.onResize(({ cols, rows }) => pty.resize(cols, rows)),
 		];

@@ -1,19 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { homeDir } from '@tauri-apps/api/path';
 import { exists } from '@tauri-apps/api/fs';
 import { IPty as ITauryPty, spawn } from "tauri-pty";
-import { IDisposable, NoopDisposable } from "./disposables.ts";
+import useBufferedCallback from "./useBufferedCallback.ts";
 
 export interface IPty {
 	run: (code: string) => Promise<void>,
 	write: (data: string) => void,
-	onData: (callback: (data: string) => any) => IDisposable,
+	onData: (callback: (data: string) => any) => void,
 	resize: (cols: number, rows: number) => void,
 }
 
 export default function usePty(cwd: string): IPty {
-	const [buffer, setBuffer] = useState<string[]>([]);
-	const onData = useRef<((data: string) => any)>(() => () => null);
+	const [onData, setOnData] = useBufferedCallback('pty');
 	const pty = useRef<ITauryPty>();
 	
 	useEffect(() => {
@@ -43,13 +42,8 @@ export default function usePty(cwd: string): IPty {
 				});
 				
 				const disposables = [
-					session.onData((data) => {
-						console.log(`PTY DATA: ${data}`);
-						onData.current
-							? onData.current(data)
-							: setBuffer([...buffer, data])
-					}),
-					session.onExit(()  => {
+					session.onData((data) => onData(data)),
+					session.onExit(() => {
 						console.warn(`PTY EXITED`);
 					}),
 				];
@@ -76,15 +70,7 @@ export default function usePty(cwd: string): IPty {
 			pty.current?.write(data);
 		},
 		onData(callback) {
-			onData.current = callback;
-			
-			if (buffer.length) {
-				buffer.forEach(data => callback(data));
-			}
-			
-			setBuffer([]);
-			
-			return NoopDisposable;
+			setOnData(callback);
 		},
 		resize(cols, rows) {
 			pty.current?.resize(cols, rows);
