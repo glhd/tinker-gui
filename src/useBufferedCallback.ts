@@ -9,7 +9,7 @@ export default function useBufferedCallback(name: string): [BufferedCallback, Se
 	const [buffer, setBuffer] = useState<string[]>([]);
 	
 	const callback: BufferedCallback = (data: string) => {
-		console.log(`[${ name }] ${ data }`);
+		// console.log(`[${ name }] ${ data }`);
 		
 		if (onData.current) {
 			onData.current(data);
@@ -19,6 +19,8 @@ export default function useBufferedCallback(name: string): [BufferedCallback, Se
 	};
 	
 	const setCallback = (callback: BufferedCallback) => {
+		console.log(`Setting new "${ name }" buffered callback…`);
+		
 		if (buffer.length) {
 			buffer.forEach(data => callback(data));
 			setBuffer([]);
@@ -29,6 +31,7 @@ export default function useBufferedCallback(name: string): [BufferedCallback, Se
 	
 	const disposable = {
 		dispose() {
+			console.log(`Disposing of "${name}" buffered callback…`);
 			onData.current = undefined;
 		}
 	};

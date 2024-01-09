@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { homeDir } from '@tauri-apps/api/path';
-import { exists } from '@tauri-apps/api/fs';
+import { appLocalDataDir, BaseDirectory, homeDir, join } from '@tauri-apps/api/path';
+import { createDir, exists, removeFile, writeTextFile } from '@tauri-apps/api/fs';
 import { IPty as ITauryPty, spawn } from "tauri-pty";
 import useBufferedCallback from "./useBufferedCallback.ts";
 import { callbackToDisposable } from "./disposables.ts";
@@ -26,7 +26,7 @@ export default function usePty(cwd: string): IPty {
 		];
 		
 		if (! pty.current) {
-			(async () => {
+			const boot = async () => {
 				console.log(`Creating new PTY instance…`);
 				
 				let PATH = await guessPath();
@@ -44,13 +44,16 @@ export default function usePty(cwd: string): IPty {
 				disposables.push(session.onData(onData));
 				disposables.push(session.onExit(({ exitCode }) => {
 					console.warn(`PTY exited with code ${ exitCode }`);
+					setTimeout(() => boot(), 1);
 				}));
 				
 				disposables.push(callbackToDisposable(() => {
 					console.log(`Killing PTY session…`)
 					session.kill();
 				}));
-			})();
+			};
+			
+			boot();
 		}
 		
 		return () => {
@@ -60,7 +63,21 @@ export default function usePty(cwd: string): IPty {
 	
 	return {
 		async run(code) {
-			pty.current?.write(`eval(json_decode('${ JSON.stringify(code) }'));\n`);
+			await createDir('scratches', { dir: BaseDirectory.AppLocalData, recursive: true });
+			
+			const suffix = (Math.random()).toString(36).substring(2);
+			const filename = await join(await appLocalDataDir(), `scratches`, `tinker-${ suffix }.php`);
+			
+			console.log(`Writing to temp file (${ filename })…`);
+			await writeTextFile(filename, code);
+			
+			console.log('Executing script…');
+			pty.current?.write(`include '${ filename }';\n`);
+			
+			setTimeout(async () => {
+				console.log(`Removing temp file (${ filename })…`);
+				await removeFile(filename);
+			}, 500);
 		},
 		write(data) {
 			pty.current?.write(data);

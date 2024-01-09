@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import tailwind from "./tailwind.ts";
 import { IDisposable } from "./disposables.ts";
 import useBufferedCallback from "./useBufferedCallback.ts";
 
@@ -17,9 +16,7 @@ export interface ITerminal {
 
 export default function useTerminal(): ITerminal {
 	const [onData, setOnData, disposableData] = useBufferedCallback('terminal');
-	
 	const [buffer, setBuffer] = useState<string[]>([]);
-	
 	const onResize = useRef<((size: { cols: number, rows: number }) => any)>(() => () => null);
 	const terminal = useRef<XTerm>();
 	const addon = useRef<FitAddon>();
@@ -40,10 +37,7 @@ export default function useTerminal(): ITerminal {
 		
 		terminal.current.loadAddon(addon.current);
 		
-		terminal.current.options.theme = {
-			background: tailwind.colors.slate[800],
-			foreground: tailwind.colors.slate[100],
-		};
+		terminal.current.options.theme = theme;
 		
 		if (buffer.length) {
 			buffer.forEach(data => xterm.write(data));
@@ -92,3 +86,27 @@ export default function useTerminal(): ITerminal {
 		}
 	};
 }
+
+const theme = {
+	background: '#1e1e1e',
+	foreground: '#d4d4d4',
+	selectionBackground: '#10333f',
+	selectionForeground: '#95a0a0',
+	selectionInactiveBackground: '#95a0a0',
+	black: '#feffff',
+	brightBlack: '#74909a',
+	red: '#934535',
+	brightRed: '#bc5329',
+	green: '#67c076',
+	brightGreen: '#5c6d74',
+	yellow: '#a3782b',
+	brightYellow: '#697a81',
+	blue: '#4689cc',
+	brightBlue: '#869395',
+	magenta: '#c24380',
+	brightMagenta: '#6c6ec0',
+	cyan: '#519e97',
+	brightCyan: '#95a0a0',
+	white: '#ece8d6',
+	brightWhite: '#fbf6e4',
+};

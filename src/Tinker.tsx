@@ -27,7 +27,7 @@ export default function Tinker({ cwd }: { cwd: string }) {
 			<Panel defaultSize={ 50 } minSize={ 20 }>
 				<Editor
 					onRun={ (code) => {
-						console.log(`RUN: ${ code }`); // FIXME
+						pty.run(code);
 					} }
 					onChange={ code => setValue(code) }
 					defaultValue={ value }
