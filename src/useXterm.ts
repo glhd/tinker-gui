@@ -1,9 +1,9 @@
-import {MutableRefObject, useEffect, useRef} from 'react';
+import {useEffect, useRef} from 'react';
 import {Terminal as XTerm} from "@xterm/xterm";
 import {FitAddon} from "@xterm/addon-fit";
 import tailwind from "./tailwind.ts";
 
-export default function useXterm(ref: MutableRefObject<any>) {
+export default function useXterm() {
 	const terminal = useRef<XTerm>();
 	const addon = useRef<FitAddon>();
 	
@@ -23,13 +23,6 @@ export default function useXterm(ref: MutableRefObject<any>) {
 			addon.current?.dispose();
 		};
 	}, []);
-	
-	// Connect the terminal to the DOM once we have it set up
-	useEffect(() => {
-		if (terminal.current && ref.current) {
-			terminal.current.open(ref.current);
-		}
-	}, [terminal.current, ref.current]);
 	
 	return {
 		terminal: terminal.current,

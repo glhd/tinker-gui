@@ -2,6 +2,7 @@ import Monaco, {useMonaco} from '@monaco-editor/react';
 import {useEffect, useRef} from "react";
 import {editor} from "monaco-editor";
 import ITextModel = editor.ITextModel;
+//import {Command} from "@tauri-apps/api/shell";
 
 export default function Editor(props: {
 	onRun: (code: string) => any,
@@ -16,6 +17,20 @@ export default function Editor(props: {
 		if (!monaco) {
 			return;
 		}
+		
+		// (async () => {
+		// 	async function readEnv(): Promise<string> {
+		// 		const commandResult = await new Command('printenv').execute();
+		//
+		// 		if (commandResult.code !== 0) {
+		// 			throw new Error(commandResult.stderr);
+		// 		}
+		//
+		// 		return commandResult.stdout;
+		// 	}
+		//	
+		// 	monaco.editor.getModels()[0]?.setValue(await readEnv());
+		// })();
 		
 		const modelCallback = (model: ITextModel) => {
 			model.onDidChangeContent(() => {

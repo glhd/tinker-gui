@@ -1,32 +1,23 @@
 import {useEffect, useRef} from "react";
 import useResize from "./useResize.ts";
-import useXterm from "./useXterm.ts";
-import {IPty} from "tauri-pty";
+import {FitAddon} from "@xterm/addon-fit";
+import {Terminal as XTerm} from "@xterm/xterm";
 
-export default function Terminal(props: { tinker: IPty|undefined, paneSize: number }) {
-	const {tinker, paneSize} = props;
+export default function Terminal(props: {
+	terminal: XTerm|undefined,
+	addon: FitAddon|undefined,
+	paneSize: number
+}) {
+	const {terminal, addon, paneSize} = props;
 	const {width, height} = useResize();
 	const ref = useRef(null);
-	const {terminal, addon} = useXterm(ref);
 	
-	// Sync terminal and tinker PTY instance
+	// Connect the terminal to the DOM once we have it set up
 	useEffect(() => {
-		if (!terminal || !tinker) {
-			return;
+		if (ref.current) {
+			terminal?.open(ref.current);
 		}
-		
-		tinker.resize(terminal.cols, terminal.rows);
-		
-		const disposables = [
-			tinker.onData(data => terminal.write(data)),
-			terminal.onData(data => tinker.write(data)),
-			terminal.onResize(({cols, rows}) => tinker.resize(cols, rows)),
-		];
-		
-		return () => {
-			disposables.forEach(d => d.dispose());
-		};
-	}, [terminal, tinker]);
+	}, [terminal, ref.current]);
 	
 	// Resize the terminal on window resize
 	useEffect(() => addon?.fit(), [width, height, paneSize]);

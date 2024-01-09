@@ -6,7 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "tinker",
+    "productName": "Tinker",
     "version": "0.0.0"
   },
   "tauri": {
@@ -16,13 +16,25 @@
         "open": true
       },
       "fs": {
-        "all": true,
+        "createDir": true,
+        "readFile": true,
+        "writeFile": true,
+        "removeFile": true,
+        "exists": true,
         "scope": [
-          "$TEMP/*"
+          "$APPLOCALDATA/**",
+          "$HOME/Library/Application Support/Herd/bin/*",
+          "$HOME/.composer/vendor/bin/*",
+          "$HOME/bin/*",
+          "/usr/local/bin/*",
+          "/usr/local/sbin/*",
+          "/opt/homebrew/bin/*",
+          "/opt/homebrew/sbin/*",
+          "/usr/bin/*",
+          "/usr/sbin/*",
+          "/bin/*",
+          "/sbin/*"
         ]
-      },
-      "os": {
-        "all": true
       },
       "path": {
         "all": true
@@ -35,10 +47,11 @@
           {
             "name": "tinker",
             "cmd": "php",
-            "args": [
-              "artisan",
-              "tinker"
-            ]
+            "args": true
+          }, {
+            "name": "printenv",
+            "cmd": "printenv",
+            "args": true
           }
         ]
       }
@@ -46,7 +59,7 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "com.tauri.dev",
+      "identifier": "com.cmorrell.tinker",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
