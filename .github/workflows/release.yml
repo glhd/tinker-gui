@@ -41,14 +41,28 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm install
+        
+      - name: Export code signing key to filesystem
+        run: echo $APPLE_API_KEY_SRC | base64 -d > apple_api_key.p8
+        env:
+          APPLE_API_KEY_SRC: ${{ secrets.APPLE_API_KEY_SRC }}
 
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: apple_api_key.p8
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'App Name v__VERSION__'
+          releaseName: 'v__VERSION__'
           releaseBody: 'See the assets to download and install this version.'
           releaseDraft: true
           prerelease: false
+
+      - name: Remove code signing key from filesystem
+        run: rm apple_api_key.p8
