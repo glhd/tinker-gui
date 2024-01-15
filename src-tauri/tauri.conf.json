@@ -7,9 +7,17 @@
   },
   "package": {
     "productName": "Tinker",
-    "version": "0.0.0"
+    "version": "0.8.4"
   },
   "tauri": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/glhd/tinker-gui/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1RkI0RkRBNEIzMzc5RjYKUldUMmVUTkwyay83OVFWanB5QUZwN2x5blBrOWdwUGs1N2hGWWwrdXIreTdtQkRMMUpuNVc5Y0kK"
+    },
     "allowlist": {
       "all": false,
       "dialog": {
