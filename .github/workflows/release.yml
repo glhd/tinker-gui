@@ -63,6 +63,7 @@ jobs:
           releaseBody: 'See the assets to download and install this version.'
           releaseDraft: true
           prerelease: false
+          includeDebug: true
 
       - name: Remove code signing key from filesystem
         run: rm apple_api_key.p8

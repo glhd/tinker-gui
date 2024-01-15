@@ -1,7 +1,8 @@
-# Tauri + React + Typescript
+# Tinker GUI
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+## Release workflow
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- Tag a new version in git that starts with `v`
+- Push to github
+- Wait for actions to finish
+- Draft release should be waiting
