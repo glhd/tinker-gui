@@ -1,7 +1,7 @@
 {
   "name": "tinker",
   "private": true,
-  "version": "0.8.5",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,8 @@
     "monaco-editor": "^0.45.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "react-hotkeys-hook": "^4.4.4",
     "react-resizable-panels": "^1.0.7",
     "tauri-pty": "^0.0.8"
   },

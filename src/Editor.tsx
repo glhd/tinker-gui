@@ -2,6 +2,7 @@ import Monaco, {useMonaco} from '@monaco-editor/react';
 import {useEffect, useRef} from "react";
 import {editor} from "monaco-editor";
 import ITextModel = editor.ITextModel;
+import { useHotkeys } from "react-hotkeys-hook";
 //import {Command} from "@tauri-apps/api/shell";
 
 export default function Editor(props: {
@@ -12,6 +13,16 @@ export default function Editor(props: {
 	const { onRun, onChange, defaultValue = `<?php\n\n` } = props;
 	const monaco = useMonaco();
 	const debounce = useRef<number>();
+	
+	useHotkeys('mod+r', () => {
+		const models = monaco?.editor.getModels() || [];
+		if (models.length) {
+			onRun(models[0].getValue());
+		}
+	}, {
+		enableOnContentEditable: true,
+		enableOnFormTags: true,
+	});
 	
 	useEffect(() => {
 		if (!monaco) {

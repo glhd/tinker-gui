@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { appLocalDataDir, BaseDirectory, homeDir, join } from '@tauri-apps/api/path';
-import { createDir, exists, removeFile, writeTextFile } from '@tauri-apps/api/fs';
+import { homeDir } from '@tauri-apps/api/path';
+import { exists } from '@tauri-apps/api/fs';
 import { IPty as ITauryPty, spawn } from "tauri-pty";
 import useBufferedCallback from "./useBufferedCallback.ts";
 import { callbackToDisposable } from "./disposables.ts";
+import { useHotkeys } from "react-hotkeys-hook";
+import toast from "react-hot-toast";
 
 export interface IPty {
 	state: string,
@@ -16,6 +18,16 @@ export interface IPty {
 export default function usePty(cwd: string): IPty {
 	const [onData, setOnData, disposableData] = useBufferedCallback('pty');
 	const pty = useRef<ITauryPty>();
+	
+	useHotkeys('mod+shift+r', () => {
+		const id = toast.loading('Reloading…');
+		setTimeout(() => toast.dismiss(id), 750);
+		pty.current?.clear();
+		pty.current?.kill();
+	}, {
+		enableOnContentEditable: true,
+		enableOnFormTags: true,
+	});
 	
 	useEffect(() => {
 		const disposables = [
@@ -65,21 +77,33 @@ export default function usePty(cwd: string): IPty {
 	return {
 		state: pty.current ? 'loaded' : 'loading',
 		async run(code) {
-			await createDir('scratches', { dir: BaseDirectory.AppLocalData, recursive: true });
+			// const id = toast.loading('Running…');
+			// setTimeout(() => toast.dismiss(id), 750);
 			
-			const suffix = (Math.random()).toString(36).substring(2);
-			const filename = await join(await appLocalDataDir(), `scratches`, `tinker-${ suffix }.php`);
+			const lines = code
+				.replace(/^\s*<\?(php)?\s*/, '')
+				.split("\n")
+				.map(line => line.trim())
+				.filter(line => line)
+				.join('\\\n');
 			
-			console.log(`Writing to temp file (${ filename })…`);
-			await writeTextFile(filename, code);
-			
-			console.log('Executing script…');
-			pty.current?.write(`include '${ filename }';\n`);
-			
-			setTimeout(async () => {
-				console.log(`Removing temp file (${ filename })…`);
-				await removeFile(filename);
-			}, 500);
+			pty.current?.write(`${ lines }\n`);
+			//
+			// await createDir('scratches', { dir: BaseDirectory.AppLocalData, recursive: true });
+			//
+			// const suffix = (Math.random()).toString(36).substring(2);
+			// const filename = await join(await appLocalDataDir(), `scratches`, `tinker-${ suffix }.php`);
+			//
+			// console.log(`Writing to temp file (${ filename })…`);
+			// await writeTextFile(filename, code);
+			//
+			// console.log('Executing script…');
+			// pty.current?.write(`return include '${ filename }';\n`);
+			//
+			// setTimeout(async () => {
+			// 	console.log(`Removing temp file (${ filename })…`);
+			// 	await removeFile(filename);
+			// }, 500);
 		},
 		write(data) {
 			pty.current?.write(data);
