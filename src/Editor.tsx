@@ -1,10 +1,9 @@
-import Monaco, {useMonaco} from '@monaco-editor/react';
-import {useEffect, useRef} from "react";
-import {editor} from "monaco-editor";
-import ITextModel = editor.ITextModel;
-import { useHotkeys } from "react-hotkeys-hook";
+import Monaco, { useMonaco } from '@monaco-editor/react';
+import { useEffect, useRef } from "react";
+import { editor } from "monaco-editor";
 import { registerLanguage } from "./registerLanguage.ts";
-//import {Command} from "@tauri-apps/api/shell";
+import useTauriEventListener from "./useTauriEventListener.ts";
+import ITextModel = editor.ITextModel;
 
 export default function Editor(props: {
 	onRun: (code: string) => any,
@@ -14,23 +13,21 @@ export default function Editor(props: {
 	const { onRun, onChange, defaultValue = `<?php\n\n` } = props;
 	const monaco = useMonaco();
 	const debounce = useRef<number>();
+	const active_model = useRef<ITextModel>();
 	
-	useHotkeys('mod+r', () => {
-		const models = monaco?.editor.getModels() || [];
-		if (models.length) {
-			onRun(models[0].getValue());
+	useTauriEventListener('run', () => {
+		if (active_model.current) {
+			onRun(active_model.current.getValue());
 		}
-	}, {
-		enableOnContentEditable: true,
-		enableOnFormTags: true,
-	});
+	}, [active_model.current, onRun]);
 	
 	useEffect(() => {
-		if (!monaco) {
+		if (! monaco) {
 			return;
 		}
 		
 		const modelCallback = (model: ITextModel) => {
+			active_model.current = model;
 			model.onDidChangeContent(() => {
 				clearTimeout(debounce.current);
 				debounce.current = setTimeout(() => {
@@ -42,10 +39,9 @@ export default function Editor(props: {
 		const disposables = [
 			monaco.editor.addEditorAction({
 				id: 'run-tinker',
-				label: 'Run in Tinker',
+				label: 'Run Code',
 				keybindings: [
-					monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-					monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR,
+					monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter
 				],
 				contextMenuGroupId: 'navigation',
 				contextMenuOrder: 1,
@@ -68,14 +64,14 @@ export default function Editor(props: {
 		}
 		
 		return () => disposables.forEach(d => d.dispose());
-	}, [monaco]);
+	}, [monaco, onRun]);
 	
 	return (
 		<Monaco
 			height="100vh"
 			defaultLanguage="php-snippet"
 			theme="vs-dark"
-			defaultValue={defaultValue}
+			defaultValue={ defaultValue }
 		/>
 	);
 }

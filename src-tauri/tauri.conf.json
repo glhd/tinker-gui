@@ -65,6 +65,9 @@
             "args": true
           }
         ]
+      },
+      "window": {
+        "setTitle": true
       }
     },
     "bundle": {
@@ -87,7 +90,6 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Tinker",
-        "center": true,
         "width": 1200,
         "height": 900,
         "fileDropEnabled": false

@@ -4,8 +4,8 @@ import { exists } from '@tauri-apps/api/fs';
 import { IPty as ITauryPty, spawn } from "tauri-pty";
 import useBufferedCallback from "./useBufferedCallback.ts";
 import { callbackToDisposable } from "./disposables.ts";
-import { useHotkeys } from "react-hotkeys-hook";
 import toast from "react-hot-toast";
+import useTauriEventListener from "./useTauriEventListener.ts";
 
 export interface IPty {
 	state: string,
@@ -19,14 +19,12 @@ export default function usePty(cwd: string): IPty {
 	const [onData, setOnData, disposableData] = useBufferedCallback('pty');
 	const pty = useRef<ITauryPty>();
 	
-	useHotkeys('mod+shift+r', () => {
+	useTauriEventListener('reload', () => {
+		console.log('reload event');
 		const id = toast.loading('Reloading…');
 		setTimeout(() => toast.dismiss(id), 750);
-		pty.current?.clear();
+		// pty.current?.clear();
 		pty.current?.kill();
-	}, {
-		enableOnContentEditable: true,
-		enableOnFormTags: true,
 	});
 	
 	useEffect(() => {
