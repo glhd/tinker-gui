@@ -3,6 +3,7 @@ import {useEffect, useRef} from "react";
 import {editor} from "monaco-editor";
 import ITextModel = editor.ITextModel;
 import { useHotkeys } from "react-hotkeys-hook";
+import { registerLanguage } from "./registerLanguage.ts";
 //import {Command} from "@tauri-apps/api/shell";
 
 export default function Editor(props: {
@@ -58,6 +59,9 @@ export default function Editor(props: {
 			monaco.editor.onDidCreateModel(modelCallback),
 		];
 		
+		registerLanguage(monaco.languages)
+			.forEach(d => disposables.push(d));
+		
 		const models = monaco.editor.getModels();
 		if (models.length) {
 			modelCallback(models[0]);
@@ -65,10 +69,11 @@ export default function Editor(props: {
 		
 		return () => disposables.forEach(d => d.dispose());
 	}, [monaco]);
+	
 	return (
 		<Monaco
 			height="100vh"
-			defaultLanguage="php"
+			defaultLanguage="php-snippet"
 			theme="vs-dark"
 			defaultValue={defaultValue}
 		/>

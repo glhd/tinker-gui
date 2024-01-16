@@ -15,5 +15,5 @@ export default function useEditorValue(): [string, (value: string) => void] {
 function valueRetriever() {
 	const value = localStorage.getItem('value');
 	
-	return value ? value : '';
+	return value ? value.replace(/^\s*<\?(php)?\s*/i, '') : '';
 }
