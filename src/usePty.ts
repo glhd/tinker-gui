@@ -83,8 +83,7 @@ export default function usePty(cwd: string): IPty {
 			const lines = code
 				.replace(/^\s*<\?(php)?\s*/, '')
 				.split("\n")
-				.map(line => line.trim())
-				.filter(line => line)
+				.filter(line => '' !== line.trim())
 				.join('\\\n');
 			
 			pty.current?.write(`${ lines }\n`);

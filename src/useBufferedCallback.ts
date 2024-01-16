@@ -12,7 +12,7 @@ export default function useBufferedCallback(name: string): [BufferedCallback, Se
 		// console.log(`[${ name }] ${ data }`);
 		
 		if (onData.current) {
-			console.log(`onData: ${data}`);
+			// console.log(`onData: ${data}`);
 			onData.current(data);
 		} else {
 			setBuffer([...buffer, data]);
