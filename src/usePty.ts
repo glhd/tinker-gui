@@ -6,6 +6,7 @@ import useBufferedCallback from "./useBufferedCallback.ts";
 import { callbackToDisposable } from "./disposables.ts";
 
 export interface IPty {
+	state: string,
 	run: (code: string) => Promise<void>,
 	write: (data: string) => void,
 	onData: (callback: (data: string) => any) => void,
@@ -62,6 +63,7 @@ export default function usePty(cwd: string): IPty {
 	}, [cwd]);
 	
 	return {
+		state: pty.current ? 'loaded' : 'loading',
 		async run(code) {
 			await createDir('scratches', { dir: BaseDirectory.AppLocalData, recursive: true });
 			

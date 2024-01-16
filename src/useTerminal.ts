@@ -5,6 +5,7 @@ import { IDisposable } from "./disposables.ts";
 import useBufferedCallback from "./useBufferedCallback.ts";
 
 export interface ITerminal {
+	state: string,
 	cols: number,
 	rows: number,
 	open: (parent: HTMLElement) => void,
@@ -63,6 +64,7 @@ export default function useTerminal(): ITerminal {
 	}, []);
 	
 	return {
+		state: terminal.current ? 'loaded' : 'loading',
 		cols: terminal.current?.cols || 0,
 		rows: terminal.current?.rows || 0,
 		open(parent) {

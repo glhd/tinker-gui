@@ -20,6 +20,9 @@
     },
     "allowlist": {
       "all": false,
+      "app": {
+        "show": true
+      },
       "dialog": {
         "open": true
       },
@@ -84,8 +87,10 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Tinker",
+        "center": true,
         "width": 1200,
-        "height": 900
+        "height": 900,
+        "fileDropEnabled": false
       }
     ]
   }

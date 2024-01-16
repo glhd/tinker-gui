@@ -20,6 +20,6 @@ export default function Terminal({ terminal, paneSize }: {
 	useEffect(() => terminal.resize(), [width, height, paneSize]);
 	
 	return (
-		<div className="font-mono bg-slate-800" ref={ ref } style={ { height } } />
+		<div className="font-mono bg-bg text-fg" ref={ ref } style={ { height } } />
 	);
 };
