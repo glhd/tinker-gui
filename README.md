@@ -1,12 +1,12 @@
-# Tinker GUI
+# Tinker
+
+> [!note]
+> Tinker is a *very simple* application. If you need something with a bit more power behind
+> it, check out [Tinkerwell](https://tinkerwell.app/) by Beyond Code.
 
 [![Screenshot of Tinker](art/screenshot.png)](https://github.com/glhd/tinker-gui/releases/latest)
 
 [Latest Relase →](https://github.com/glhd/tinker-gui/releases/latest)
-
-> [!note]
-> Tinker is a *very simple* application. If you need something with a bit more power behind
-> it, check out [Tinkerwell](https://tinkerwell.app/).
 
 ## Release workflow
 
